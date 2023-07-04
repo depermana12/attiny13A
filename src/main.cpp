@@ -1,44 +1,49 @@
-#include <Arduino.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
 #include <avr/sleep.h>
-#include <avr/power.h>
-boolean buttonState = 0;         // current state of the button
-boolean lastButtonState = 0;     // previous state of the button
+
+volatile uint8_t buttonState = 0;         // current state of the button
+volatile uint8_t lastButtonState = 0;     // previous state of the button
+volatile uint8_t ledState = LOW;          // current state of the LED
+
 void setup() {
    DDRB &= ~(1 << PB4);          // Set the pin PB4 as input
-   PORTB |= (1 << PB4);          //activate pull-up resistor for PB4
-   DDRB |= (1<<PB0);             // set PB1 as output(LED)
+   PORTB |= (1 << PB4);          // Activate pull-up resistor for PB4
+   DDRB |= (1 << PB0);           // Set PB0 as output (LED)
+
+   // Enable Pin Change Interrupt on PCINT4 (PB4)
+   PCICR |= (1 << PCIE0);
+   PCMSK0 |= (1 << PCINT4);
+
+   sei();  // Enable global interrupts
 }
+
 void sleep() {
-    GIMSK |= _BV(PCIE);                     // Enable Pin Change Interrupts
-    PCMSK |= _BV(PCINT4);                   // Use PB4 as interrupt pin
-    ADCSRA &= ~_BV(ADEN);                   // ADC off
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);    // replaces above statement
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    sleep_cpu();
+    sleep_disable();
+}
 
-    sleep_enable();                         // Sets the Sleep Enable bit in the MCUCR Register (SE BIT)
-    sei();                                  // Enable interrupts
-    sleep_cpu();                            // sleep
-
-    cli();                                  // Disable interrupts
-    PCMSK &= ~_BV(PCINT4);                  // Turn off PB4 as interrupt pin
-    sleep_disable();                        // Clear SE bit
-    //ADCSRA |= _BV(ADEN);                  // ADC on
-    sei();                                  // Enable interrupts
-    } // sleep
 ISR(PCINT0_vect) {
-    // This is called when the interrupt occurs, but I don't need to do anything in it
-    }
-void loop() {
-   static unsigned long timer = 0;
-   unsigned long interval = 100;                   // check switch 20 times per second
-   if (millis() - timer >= interval) {
-      timer = millis();
-      buttonState = PINB & (1 << PB4);
-      if (buttonState != lastButtonState) {
-         if (buttonState == LOW) {
-            digitalWrite(PB0, !digitalRead(PB0)); // toggle the output
+    buttonState = PINB & (1 << PB4);
+
+    if (buttonState != lastButtonState) {
+        if (buttonState == LOW) {
+            ledState = !ledState;
+            PORTB ^= (1 << PB0); // Toggle the output
         }
-  }
-      lastButtonState = buttonState;
-   }
-   sleep();
+    }
+
+    lastButtonState = buttonState;
+}
+
+int main() {
+    setup();
+
+    while (1) {
+        sleep();
+    }
+
+    return 0;
 }
