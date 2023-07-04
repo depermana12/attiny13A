@@ -1,0 +1,3 @@
+In this modified version, I have added two toggle modes for the LEDs. When the button is pressed (PB4 goes LOW), the ledState is set to 0. In the while loop, if ledState is non-zero, the toggleLedChaser500ms function is called, which blinks the LEDs in a chaser pattern with a 500ms interval. If ledState is 0, the toggleLedChaser1s function is called, which blinks the LEDs in a chaser pattern with a 1s interval.
+
+Note that the ledState variable is used to store the current LED pattern, and the lower 3 bits (bit 0, bit 1, bit 2) represent the states of LED1, LED2, and LED3 respectively. The PORTB register is updated accordingly to control the LEDs.
