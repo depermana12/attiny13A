@@ -12,8 +12,8 @@ void setup() {
    DDRB |= (1 << PB0);           // Set PB0 as output (LED)
 
    // Enable Pin Change Interrupt on PCINT4 (PB4)
-   PCICR |= (1 << PCIE0);
-   PCMSK0 |= (1 << PCINT4);
+   GIMSK |= (1 << PCIE);
+   PCMSK |= (1 << PCINT4);
 
    sei();  // Enable global interrupts
 }
